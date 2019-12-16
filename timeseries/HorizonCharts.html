@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  .horizon {
+    width: auto;
+    border-top: solid 1px #000;
+    border-bottom: solid 1px #000;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .horizon + .horizon {
+    border-top: none;
+  }
+
+  .horizon canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  .horizon .title,
+  .horizon .value {
+      bottom: 0;
+      margin: 0 px;
+      position: absolute;
+      font-family: sans-serif;
+      text-shadow: 0 1px 0 rgba(255,255,255,.5);
+      white-space: nowrap;
+  }
+
+  .horizon .title {
+      left: 0;
+  }
+
+  .horizon .value {
+      right: 0;
+  }
+
+</style>
+
+<body>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://unpkg.com/d3-horizon-chart@0.0.5"></script>
+<div id="chart"></div>
+<script>
+
+    function loadStockData(stock, callback) {
+        d3.tsv(stock[0], function(d) {
+            return +d.value
+          },
+          function(d) {
+            callback(null, {
+                'stock': stock[1],
+                'values': d
+            });
+        });
+    }
+    var q = d3.queue();
+
+
+    [["./data/bj.tsv", "北京"], ["./data/sjz.tsv", "石家庄"], ["./data/tj.tsv", "天津"], ["./data/ts.tsv", "唐山"]].forEach(function(stock) {
+        q.defer(loadStockData, stock);
+    });
+
+    q.awaitAll(function(error, stocks) {
+        if (error) throw error;
+
+        d3.select('#chart').selectAll('.horizon')
+            .data(stocks)
+            .enter()
+            .append('div')
+            .attr('class', 'horizon')
+            .each(function(d) {
+                d3.horizonChart()
+                    .height(50)
+                    .title(d.stock)
+                    .call(this, d.values);
+            });
+    });
+
+// ["./data/bj.tsv", "./data/sjz.tsv", "./data/tj.tsv", "./data/ts.tsv"].forEach(function(file){
+//   d3.tsv(file,
+//   function(d) {
+//     return +d.value
+//   },
+//   function(error, data) {
+//     var horizonChart = d3.horizonChart()
+//         .height(100)
+//         .title(file)
+//         .colors(['#313695', '#4575b4', '#74add1', '#abd9e9', '#fee090', '#fdae61', '#f46d43', '#d73027']);
+//
+//     var horizons = d3.select('body').selectAll('.horizon')
+//         .data([data])
+//         .enter().append('div')
+//         .attr('class', 'horizon')
+//         .each(horizonChart);
+//       });
+// })
+// generate some random data
+
+// d3.tsv("./data/bj.tsv",
+// function(d) {
+//   return +d.value
+// },
+// function(error, data) {
+//   var horizonChart = d3.horizonChart()
+//       .height(100)
+//       .title('Horizon, 4-band')
+//       .colors(['#313695', '#4575b4', '#74add1', '#abd9e9', '#fee090', '#fdae61', '#f46d43', '#d73027']);
+//
+//   var horizons = d3.select('body').selectAll('.horizon')
+//       .data([data])
+//       .enter().append('div')
+//       .attr('class', 'horizon')
+//       .each(horizonChart);
+//     });
+
+</script>

@@ -23,19 +23,24 @@
       }
     </style>
     <script src="https://d3js.org/d3.v3.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-scale-chromatic.v1.min.js"></script>
+    <script src="https://unpkg.com/d3-horizon-chart"></script>
   </head>
   <body>
-    <div id="chart"></div>
-    <div id="dataset-picker">
-    </div>
+    <div id="dataset-picker"></div>
+    <div id="chart" align="center"></div>
+    <iframe src="HorizonCharts.html" width="1500" height="250" frameborder="0"></iframe>
     <script type="text/javascript">
-      var margin = { top: 50, right: 0, bottom: 100, left: 80 },
-          width = 830 - margin.left - margin.right,
-          height = 800 - margin.top - margin.bottom,
-          gridSize = Math.floor(width / 50),
-          legendElementWidth = 31 * gridSize / 9,
+      var margin = { top: 0, right: 0, bottom: 0, left: 30 },
+          width = 1500 - margin.left - margin.right,
+          height = 500 - margin.top - margin.bottom,
+          xSize = Math.floor(width / 48),
+          ySize = Math.floor(height / 35)
+          legendElementWidth = 48 * xSize / 9,
           buckets = 9,
-          colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"], // alternatively colorbrewer.YlGnBu[9]
+          colors = d3.schemeOranges[9]//["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"], // alternatively colorbrewer.YlGnBu[9]
           months = Array.from({length: 48}, (a, i) => i),
           days = Array.from({length: 31}, (a, i) => i);
           datasets = ["./data/bj.tsv", "./data/sjz.tsv", "./data/tj.tsv", "./data/ts.tsv"];
@@ -46,25 +51,38 @@
           .append("g")
           .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+      years = ["2015", "2016", "2017", "2018"]
+      var yearLabels = svg.selectAll(".yearLabel")
+          .data(years)
+          .enter().append("text")
+            .attr("class", "axis-workmonth")
+            .text(function (d) { return d; })
+            .style('writing-mode','tb-rl')
+            .attr("x", function(d, i) { return i * 12 * xSize + 5 * xSize; })
+            .attr("y", function(d, i) { return 33.5 * ySize; })
+            .style("text-anchor", "start")
+            .attr("transform", "translate(" + xSize / 2 + ", -6)")
+
       var monthLabels = svg.selectAll(".monthLabel")
           .data(months)
           .enter().append("text")
             .attr("class", "axis-workmonth")
-            .text(function (d) { return (Math.floor(d/12)+2015)+"-"+(d%12+1); })
-            .attr("x", 0)
-            .attr("y", function (d, i) { return i * gridSize; })
-            .style("text-anchor", "end")
-            .attr("transform", "translate(-6," + gridSize / 1.5 + ")")
+            .text(function (d) { return (d%12+1); })
+            .style('writing-mode','tb-rl')
+            .attr("x", function(d, i) { return i * xSize; })
+            .attr("y", function(d, i) { return 32.5 * ySize; })
+            .style("text-anchor", "start")
+            .attr("transform", "translate(" + xSize / 2 + ", -6)")
 
       var dayLabels = svg.selectAll(".dayLabel")
           .data(days)
           .enter().append("text")
             .attr("class", "axis-workday")
-            .text(function(d) { return d; })
-            .attr("x", function(d, i) { return i * gridSize; })
-            .attr("y", 0)
-            .style("text-anchor", "middle")
-            .attr("transform", "translate(" + gridSize / 2 + ", -6)")
+            .text(function(d) { return d+1; })
+            .attr("x", 0)
+            .attr("y", function (d, i) { return (i+1) * ySize; })
+            .style("text-anchor", "end")
+            .attr("transform", "translate(-6," + ySize / 1.5 + ")")
       var heatmapChart = function(tsvFile) {
         d3.tsv(tsvFile,
         function(d) {
@@ -85,13 +103,13 @@
           cards.append("title");
 
           cards.enter().append("rect")
-              .attr("x", function(d) { return (d.day) * gridSize; })
-              .attr("y", function(d) { return (d.month) * gridSize; })
+              .attr("x", function(d) { return (d.month) * xSize; })
+              .attr("y", function(d) { return (d.day+1) * ySize; })
               .attr("rx", 4)
               .attr("ry", 4)
               .attr("class", "hour bordered")
-              .attr("width", gridSize)
-              .attr("height", gridSize)
+              .attr("width", xSize)
+              .attr("height", ySize)
               .style("fill", colors[0]);
 
           cards.transition().duration(1000)
@@ -109,16 +127,16 @@
 
           legend.append("rect")
             .attr("x", function(d, i) { return legendElementWidth * i; })
-            .attr("y", 48 * gridSize)
+            .attr("y", 0)
             .attr("width", legendElementWidth)
-            .attr("height", gridSize)
+            .attr("height", ySize)
             .style("fill", function(d, i) { return colors[i]; });
 
           legend.append("text")
             .attr("class", "mono")
             .text(function(d) { return "≥ " + Math.round(d); })
             .attr("x", function(d, i) { return legendElementWidth * i; })
-            .attr("y", 50 * gridSize);
+            .attr("y", ySize);
 
           legend.exit().remove();
 
